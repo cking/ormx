@@ -141,7 +141,7 @@ impl<B: Backend> TryFrom<&syn::DeriveInput> for Table<B> {
             id,
             insertable,
             fields,
-            deletable: deletable.unwrap_or(false)
+            deletable: deletable.unwrap_or(false),
         })
     }
 }

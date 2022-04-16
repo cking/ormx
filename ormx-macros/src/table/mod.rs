@@ -3,7 +3,7 @@ use std::{borrow::Cow, convert::TryFrom, marker::PhantomData};
 use itertools::Itertools;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{DeriveInput, Result, Type, Visibility, Attribute};
+use syn::{Attribute, DeriveInput, Result, Type, Visibility};
 
 use crate::{
     attrs::{Getter, Insertable},
@@ -20,7 +20,7 @@ pub struct Table<B: Backend> {
     pub id: TableField<B>,
     pub fields: Vec<TableField<B>>,
     pub insertable: Option<Insertable>,
-    pub deletable: bool
+    pub deletable: bool,
 }
 
 #[derive(Clone)]
@@ -52,7 +52,9 @@ impl<B: Backend> Table<B> {
 
     pub fn insertable_fields_except_id(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
         let id = self.id.field.clone();
-        self.fields.iter().filter(move |field| field.field != id && !field.default)
+        self.fields
+            .iter()
+            .filter(move |field| field.field != id && !field.default)
     }
 
     pub fn default_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {

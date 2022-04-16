@@ -5,8 +5,9 @@ use syn::{Data, DeriveInput, Error, Field, Result};
 use super::Patch;
 use crate::{
     attrs::{parse_attrs, PatchAttr, PatchFieldAttr},
+    backend::Backend,
     patch::PatchField,
-    utils::{missing_attr, set_once}, backend::Backend,
+    utils::{missing_attr, set_once},
 };
 
 impl<B: Backend> TryFrom<&syn::DeriveInput> for Patch<B> {
@@ -36,7 +37,8 @@ impl<B: Backend> TryFrom<&syn::DeriveInput> for Patch<B> {
         }
 
         let table_name = table_name.ok_or_else(|| missing_attr("table_name"))?;
-        let reserved_table_name = B::RESERVED_IDENTS.contains(&&*table_name.to_string().to_uppercase());
+        let reserved_table_name =
+            B::RESERVED_IDENTS.contains(&&*table_name.to_string().to_uppercase());
 
         Ok(Patch {
             ident: value.ident.clone(),

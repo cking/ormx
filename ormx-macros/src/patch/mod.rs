@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, borrow::Cow, marker::PhantomData};
+use std::{borrow::Cow, convert::TryFrom, marker::PhantomData};
 
 use proc_macro2::TokenStream;
 use quote::quote;

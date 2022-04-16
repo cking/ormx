@@ -88,7 +88,9 @@ fn update<B: Backend>(table: &Table<B>) -> TokenStream {
         bindings.next().unwrap()
     );
     let id_argument = &table.id.field;
-    let other_arguments = table.insertable_fields_except_id().map(TableField::fmt_as_argument);
+    let other_arguments = table
+        .insertable_fields_except_id()
+        .map(TableField::fmt_as_argument);
 
     quote! {
         fn update<'a, 'c: 'a>(
