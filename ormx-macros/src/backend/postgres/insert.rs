@@ -60,7 +60,7 @@ pub fn impl_insert(table: &Table<PgBackend>) -> TokenStream {
         .map(|f| f.fmt_as_argument())
         .collect::<Vec<TokenStream>>();
 
-    let fetch_funtion = if default_fields.is_empty() {
+    let fetch_function = if default_fields.is_empty() {
         Ident::new("execute", Span::call_site())
     } else {
         Ident::new("fetch_one", Span::call_site())
@@ -77,7 +77,7 @@ pub fn impl_insert(table: &Table<PgBackend>) -> TokenStream {
             ) -> #box_future<'a, sqlx::Result<Self::Table>> {
                 Box::pin(async move {
                     let _generated = sqlx::query!(#insert_sql, #( #insert_field_exprs, )*)
-                        .#fetch_funtion(db)
+                        .#fetch_function(db)
                         .await?;
 
                     Ok(Self::Table {
