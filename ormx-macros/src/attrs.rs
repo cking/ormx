@@ -1,3 +1,4 @@
+use proc_macro2::Literal;
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
@@ -25,8 +26,8 @@ pub enum TableFieldAttr {
     Column(String),
     // custom_type
     CustomType(()),
-    // default
-    Default(()),
+    // default [= "always" | "insert"]?
+    Default(Option<Literal>),
     // get_one [= <ident>]? [(<type>)]?
     GetOne(Getter),
     // get_optional [= <ident>]? [(<type>)]?
@@ -154,7 +155,7 @@ impl_parse!(TableFieldAttr {
     "get_many" => GetMany(Getter),
     "set" => Set((= Ident)?),
     "custom_type" => CustomType(),
-    "default" => Default(),
+    "default" => Default((= Literal)?),
     "by_ref" => ByRef(),
     "insert_attribute" => InsertAttr(= AnyAttribute)
 });

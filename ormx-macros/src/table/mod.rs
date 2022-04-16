@@ -23,6 +23,14 @@ pub struct Table<B: Backend> {
     pub deletable: bool,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DefaultType {
+    /// only remove the type from insert, but allow it to be specified otherwise
+    Insert,
+    /// never allow the type to be specified; always use the default value
+    Always,
+}
+
 #[derive(Clone)]
 pub struct TableField<B: Backend> {
     pub field: Ident,
@@ -30,7 +38,7 @@ pub struct TableField<B: Backend> {
     pub column_name: String,
     pub custom_type: bool,
     pub reserved_ident: bool,
-    pub default: bool,
+    pub default: Option<DefaultType>,
     pub get_one: Option<Getter>,
     pub get_optional: Option<Getter>,
     pub get_many: Option<Getter>,
@@ -41,24 +49,18 @@ pub struct TableField<B: Backend> {
 }
 
 impl<B: Backend> Table<B> {
-    pub fn fields_except_id(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        let id = self.id.field.clone();
-        self.fields.iter().filter(move |field| field.field != id)
-    }
-
     pub fn insertable_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        self.fields.iter().filter(|field| !field.default)
+        self.fields.iter().filter(|field| field.default.is_none())
     }
 
-    pub fn insertable_fields_except_id(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        let id = self.id.field.clone();
+    pub fn updatable_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
         self.fields
             .iter()
-            .filter(move |field| field.field != id && !field.default)
+            .filter(|field| field.default != Some(DefaultType::Always))
     }
 
     pub fn default_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        self.fields.iter().filter(|field| field.default)
+        self.fields.iter().filter(|field| field.default.is_some())
     }
 
     pub fn select_column_list(&self) -> String {

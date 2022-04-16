@@ -119,13 +119,13 @@ fn insert(table: &Table<MySqlBackend>) -> TokenStream {
 ///     The ID is already known, so we can just use it.
 fn query_id(table: &Table<MySqlBackend>) -> TokenStream {
     match table.id.default {
-        true => quote! {
+        Some(_) => quote! {
             let _id = sqlx::query!("SELECT LAST_INSERT_ID() AS id")
                 .fetch_one(&mut tx)
                 .await?
                 .id;
         },
-        false => {
+        None => {
             let id_ident = &table.id.field;
             quote!(let _id = self.#id_ident;)
         }
