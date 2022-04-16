@@ -16,6 +16,7 @@ pub struct Table<B: Backend> {
     pub ident: Ident,
     pub vis: Visibility,
     pub table: String,
+    pub reserved_table_name: bool,
     pub id: TableField<B>,
     pub fields: Vec<TableField<B>>,
     pub insertable: Option<Insertable>,
@@ -59,6 +60,14 @@ impl<B: Backend> Table<B> {
             .map(|field| field.fmt_for_select())
             .join(", ")
     }
+
+    pub fn name(&self) -> Cow<str> {
+        if self.reserved_table_name {
+            format!("{}{}{}", B::QUOTE, self.table, B::QUOTE).into()
+        } else {
+            Cow::Borrowed(&self.table)
+        }
+    }
 }
 
 impl<B: Backend> TableField<B> {
@@ -83,8 +92,10 @@ impl<B: Backend> TableField<B> {
         let ty = &self.ty;
 
         let mut out = quote!(self.#ident);
+        let mut ty = quote!(#ty);
         if self.by_ref {
             out = quote!(&#out);
+            ty = quote!(&#ty);
         }
         if self.custom_type {
             out = quote!(#out as #ty);
