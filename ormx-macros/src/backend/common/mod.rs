@@ -144,16 +144,8 @@ pub fn setters<B: Backend>(table: &Table<B>) -> TokenStream {
 pub(crate) fn impl_patch<B: Backend>(patch: &Patch<B>) -> TokenStream {
     let patch_ident = &patch.ident;
     let table_path = &patch.table;
-    let field_idents = &patch
-        .fields
-        .iter()
-        .map(|field| &field.ident)
-        .collect::<Vec<&Ident>>();
-    let query_args = &patch
-        .fields
-        .iter()
-        .map(PatchField::fmt_as_argument)
-        .collect::<Vec<TokenStream>>();
+    let field_idents = patch.fields.iter().map(|field| &field.ident);
+    let query_args = patch.fields.iter().map(PatchField::fmt_as_argument);
 
     let mut bindings = B::Bindings::default();
     let mut assignments = Vec::with_capacity(patch.fields.len());
@@ -223,19 +215,13 @@ pub(crate) fn insert_struct<B: Backend>(table: &Table<B>) -> TokenStream {
 fn impl_from_for_insert_struct<B: Backend>(table: &Table<B>, insert_struct: &Ident) -> TokenStream {
     let table_ident = &table.ident;
 
-    let fields = table
-        .insertable_fields()
-        .map(|field| {
-            let ident = &field.field;
-            quote!(#ident: v.#ident,)
-        })
-        .collect::<TokenStream>();
+    let fields = table.insertable_fields().map(|field| &field.field);
 
     quote! {
         impl From<#table_ident> for #insert_struct {
             fn from(v: #table_ident) -> Self {
                 Self {
-                    #fields
+                    #(#fields: v.#fields,)*
                 }
             }
         }
