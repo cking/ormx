@@ -38,6 +38,8 @@ pub enum TableFieldAttr {
     Set(Option<Ident>),
     // by_ref
     ByRef(()),
+    // set_as_wildcard
+    SetAsWildcard(()),
     // insert_attribute = <attribute>
     InsertAttr(AnyAttribute),
 }
@@ -157,6 +159,7 @@ impl_parse!(TableFieldAttr {
     "custom_type" => CustomType(),
     "default" => Default((= Literal)?),
     "by_ref" => ByRef(),
+    "set_as_wildcard" => SetAsWildcard(),
     "insert_attribute" => InsertAttr(= AnyAttribute)
 });
 

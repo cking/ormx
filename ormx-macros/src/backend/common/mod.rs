@@ -111,11 +111,18 @@ pub fn setters<B: Backend>(table: &Table<B>) -> TokenStream {
             );
 
             let mut value = quote!(value);
-            if field.custom_type {
-                value = quote!(#value as #field_ty)
-            }
-            if field.by_ref {
-                value = quote!(&(#value));
+            if field.set_as_wildcard {
+                if field.by_ref {
+                    value = quote!(&(#value));
+                }
+                value = quote!(#value as _);
+            } else {
+                if field.custom_type {
+                    value = quote!(#value as #field_ty);
+                }
+                if field.by_ref {
+                    value = quote!(&(#value));
+                }
             }
             setters.extend(quote! {
                 #vis async fn #fn_name(

@@ -36,7 +36,8 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
             get_many,
             set,
             default,
-            by_ref
+            by_ref,
+            set_as_wildcard
         );
         let mut insert_attrs = vec![];
 
@@ -66,6 +67,7 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
                     },
                 )?,
                 TableFieldAttr::ByRef(..) => set_once(&mut by_ref, true)?,
+                TableFieldAttr::SetAsWildcard(..) => set_once(&mut set_as_wildcard, true)?,
                 TableFieldAttr::InsertAttr(mut attr) => insert_attrs.append(&mut attr.0),
             }
         }
@@ -81,6 +83,7 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
             get_many,
             set,
             by_ref: by_ref.unwrap_or(false),
+            set_as_wildcard: set_as_wildcard.unwrap_or(false),
             insert_attrs,
             _phantom: PhantomData,
         })
