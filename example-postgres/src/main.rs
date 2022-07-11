@@ -21,7 +21,6 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("insert a new row into the database");
     let mut new = InsertUser {
-        user_id: 1,
         first_name: "Moritz".to_owned(),
         last_name: "Bischof".to_owned(),
         email: "moritz.bischof1@gmail.com".to_owned(),

@@ -68,8 +68,7 @@ struct User {
     #[ormx(column = "id")]
     // generate `User::get_by_user_id(u32) -> Result<Self>`
     #[ormx(get_one = get_by_user_id(u32))]
-    // this column is database-generated.
-    #[ormx(default)]
+    // this column is always database-generated, since it is the ID column. no need for #[ormx(default)]
     user_id: u32,
     first_name: String,
     last_name: String,
