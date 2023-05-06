@@ -1,3 +1,4 @@
+use proc_macro2::Literal;
 use syn::{
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
@@ -12,7 +13,7 @@ pub enum TableAttr {
     // insertable [= [<attribute>]* <ident>]?
     Insertable(Option<Insertable>),
     // deletable
-    Deletable(())
+    Deletable(()),
 }
 
 pub struct Insertable {
@@ -25,8 +26,8 @@ pub enum TableFieldAttr {
     Column(String),
     // custom_type
     CustomType(()),
-    // default
-    Default(()),
+    // default [= "always" | "insert"]?
+    Default(Option<Literal>),
     // get_one [= <ident>]? [(<type>)]?
     GetOne(Getter),
     // get_optional [= <ident>]? [(<type>)]?
@@ -37,8 +38,10 @@ pub enum TableFieldAttr {
     Set(Option<Ident>),
     // by_ref
     ByRef(()),
+    // set_as_wildcard
+    SetAsWildcard(()),
     // insert_attribute = <attribute>
-    InsertAttr(AnyAttribute)
+    InsertAttr(AnyAttribute),
 }
 
 #[derive(Clone)]
@@ -154,8 +157,9 @@ impl_parse!(TableFieldAttr {
     "get_many" => GetMany(Getter),
     "set" => Set((= Ident)?),
     "custom_type" => CustomType(),
-    "default" => Default(),
+    "default" => Default((= Literal)?),
     "by_ref" => ByRef(),
+    "set_as_wildcard" => SetAsWildcard(),
     "insert_attribute" => InsertAttr(= AnyAttribute)
 });
 

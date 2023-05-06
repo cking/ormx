@@ -81,7 +81,7 @@ fn query_default(table: &Table<MySqlBackend>) -> TokenStream {
     let query_default_sql = format!(
         "SELECT {} FROM {} WHERE {} = ?",
         default_fields.map(TableField::fmt_for_select).join(", "),
-        table.table,
+        table.name(),
         table.id.column()
     );
 
@@ -99,7 +99,7 @@ fn insert(table: &Table<MySqlBackend>) -> TokenStream {
 
     let insert_sql = format!(
         "INSERT INTO {} ({}) VALUES ({})",
-        table.table,
+        table.name(),
         insert_fields.iter().map(|field| field.column()).join(", "),
         MySqlBindings.take(insert_fields.len()).join(", ")
     );
@@ -119,13 +119,13 @@ fn insert(table: &Table<MySqlBackend>) -> TokenStream {
 ///     The ID is already known, so we can just use it.
 fn query_id(table: &Table<MySqlBackend>) -> TokenStream {
     match table.id.default {
-        true => quote! {
+        Some(_) => quote! {
             let _id = sqlx::query!("SELECT LAST_INSERT_ID() AS id")
                 .fetch_one(&mut tx)
                 .await?
                 .id;
         },
-        false => {
+        None => {
             let id_ident = &table.id.field;
             quote!(let _id = self.#id_ident;)
         }

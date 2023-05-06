@@ -1,7 +1,7 @@
 [package]
 name = "example-mysql"
 version = "0.1.0"
-authors = ["moritz"]
+authors = ["moritz", "Matt Fellenz"]
 edition = "2018"
 
 [dependencies]

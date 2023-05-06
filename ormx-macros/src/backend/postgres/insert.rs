@@ -19,12 +19,17 @@ fn insert_sql(table: &Table<PgBackend>, insert_fields: &[&TableField<PgBackend>]
     if returning_fields.is_empty() {
         format!(
             "INSERT INTO {} ({}) VALUES ({})",
-            table.table, columns, fields
+            table.name(),
+            columns,
+            fields
         )
     } else {
         format!(
             "INSERT INTO {} ({}) VALUES ({}) RETURNING {}",
-            table.table, columns, fields, returning_fields
+            table.name(),
+            columns,
+            fields,
+            returning_fields
         )
     }
 }
@@ -55,11 +60,17 @@ pub fn impl_insert(table: &Table<PgBackend>) -> TokenStream {
         .map(|f| f.fmt_as_argument())
         .collect::<Vec<TokenStream>>();
 
-    let fetch_funtion = if default_fields.is_empty() {
+    let fetch_function = if default_fields.is_empty() {
         Ident::new("execute", Span::call_site())
     } else {
         Ident::new("fetch_one", Span::call_site())
     };
+
+    let default_field_entries = default_fields.iter().map(|field| {
+        let name = &field.field;
+        let ty = &field.ty;
+        quote! { #name: #ty }
+    });
 
     let box_future = crate::utils::box_future();
     quote! {
@@ -70,9 +81,13 @@ pub fn impl_insert(table: &Table<PgBackend>) -> TokenStream {
                 self,
                 db: impl sqlx::Executor<'c, Database = ormx::Db> + 'a,
             ) -> #box_future<'a, sqlx::Result<Self::Table>> {
+                struct Generated {
+                    #(#default_field_entries, )*
+                }
+
                 Box::pin(async move {
-                    let _generated = sqlx::query!(#insert_sql, #( #insert_field_exprs, )*)
-                        .#fetch_funtion(db)
+                    let _generated = sqlx::query_as!(Generated, #insert_sql, #( #insert_field_exprs, )*)
+                        .#fetch_function(db)
                         .await?;
 
                     Ok(Self::Table {

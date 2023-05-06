@@ -3,7 +3,7 @@ use std::{borrow::Cow, convert::TryFrom, marker::PhantomData};
 use itertools::Itertools;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{DeriveInput, Result, Type, Visibility, Attribute};
+use syn::{Attribute, DeriveInput, Result, Type, Visibility};
 
 use crate::{
     attrs::{Getter, Insertable},
@@ -16,10 +16,19 @@ pub struct Table<B: Backend> {
     pub ident: Ident,
     pub vis: Visibility,
     pub table: String,
+    pub reserved_table_name: bool,
     pub id: TableField<B>,
     pub fields: Vec<TableField<B>>,
     pub insertable: Option<Insertable>,
-    pub deletable: bool
+    pub deletable: bool,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum DefaultType {
+    /// only remove the type from insert, but allow it to be specified otherwise
+    Insert,
+    /// never allow the type to be specified; always use the default value
+    Always,
 }
 
 #[derive(Clone)]
@@ -29,28 +38,30 @@ pub struct TableField<B: Backend> {
     pub column_name: String,
     pub custom_type: bool,
     pub reserved_ident: bool,
-    pub default: bool,
+    pub default: Option<DefaultType>,
     pub get_one: Option<Getter>,
     pub get_optional: Option<Getter>,
     pub get_many: Option<Getter>,
     pub set: Option<Ident>,
     pub by_ref: bool,
+    pub set_as_wildcard: bool,
     pub insert_attrs: Vec<Attribute>,
     pub _phantom: PhantomData<*const B>,
 }
 
 impl<B: Backend> Table<B> {
-    pub fn fields_except_id(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        let id = self.id.field.clone();
-        self.fields.iter().filter(move |field| field.field != id)
+    pub fn insertable_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
+        self.fields.iter().filter(|field| field.default.is_none())
     }
 
-    pub fn insertable_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        self.fields.iter().filter(|field| !field.default)
+    pub fn updatable_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
+        self.fields
+            .iter()
+            .filter(|field| field.default != Some(DefaultType::Always))
     }
 
     pub fn default_fields(&self) -> impl Iterator<Item = &TableField<B>> + Clone {
-        self.fields.iter().filter(|field| field.default)
+        self.fields.iter().filter(|field| field.default.is_some())
     }
 
     pub fn select_column_list(&self) -> String {
@@ -58,6 +69,14 @@ impl<B: Backend> Table<B> {
             .iter()
             .map(|field| field.fmt_for_select())
             .join(", ")
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        if self.reserved_table_name {
+            format!("{}{}{}", B::QUOTE, self.table, B::QUOTE).into()
+        } else {
+            Cow::Borrowed(&self.table)
+        }
     }
 }
 

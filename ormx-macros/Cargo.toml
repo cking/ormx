@@ -1,10 +1,10 @@
 [package]
 name = "ormx-macros"
 version = "0.10.4"
-authors = ["moritz"]
+authors = ["moritz", "Matt Fellenz"]
 edition = "2018"
 description = "lightweight procedural macros bringing orm-like features to sqlx"
-homepage = "https://github.com/NyxCode/ormx"
+homepage = "https://github.com/mattfbacon/ormx"
 license = "MIT"
 
 [lib]

@@ -3,7 +3,7 @@ use std::{convert::TryFrom, marker::PhantomData};
 use proc_macro2::Span;
 use syn::{Data, DeriveInput, Error, Ident, Result};
 
-use super::{Table, TableField};
+use super::{DefaultType, Table, TableField};
 use crate::{
     attrs::{parse_attrs, Insertable, TableAttr, TableFieldAttr},
     backend::Backend,
@@ -36,7 +36,8 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
             get_many,
             set,
             default,
-            by_ref
+            by_ref,
+            set_as_wildcard
         );
         let mut insert_attrs = vec![];
 
@@ -51,8 +52,22 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
                     let default = || Ident::new(&format!("set_{}", ident), Span::call_site());
                     set_once(&mut set, s.unwrap_or_else(default))?
                 }
-                TableFieldAttr::Default(..) => set_once(&mut default, true)?,
+                TableFieldAttr::Default(literal) => set_once(
+                    &mut default,
+                    match literal {
+                        Some(literal) => match literal.to_string().as_str() {
+                            "\"always\"" => DefaultType::Always,
+                            "\"insert\"" => DefaultType::Insert,
+                            _ => proc_macro_error::abort!(
+                                literal,
+                                "allowed values: \"always\", \"insert\""
+                            ),
+                        },
+                        None => DefaultType::Insert,
+                    },
+                )?,
                 TableFieldAttr::ByRef(..) => set_once(&mut by_ref, true)?,
+                TableFieldAttr::SetAsWildcard(..) => set_once(&mut set_as_wildcard, true)?,
                 TableFieldAttr::InsertAttr(mut attr) => insert_attrs.append(&mut attr.0),
             }
         }
@@ -62,12 +77,13 @@ impl<B: Backend> TryFrom<&syn::Field> for TableField<B> {
             ty: value.ty.clone(),
             custom_type: custom_type.unwrap_or(false),
             reserved_ident,
-            default: default.unwrap_or(false),
+            default,
             get_one,
             get_optional,
             get_many,
             set,
             by_ref: by_ref.unwrap_or(false),
+            set_as_wildcard: set_as_wildcard.unwrap_or(false),
             insert_attrs,
             _phantom: PhantomData,
         })
@@ -83,7 +99,7 @@ impl<B: Backend> TryFrom<&syn::DeriveInput> for Table<B> {
             _ => panic!("not a struct with named fields"),
         };
 
-        let fields = data
+        let mut fields = data
             .fields
             .iter()
             .map(TableField::try_from)
@@ -105,33 +121,44 @@ impl<B: Backend> TryFrom<&syn::DeriveInput> for Table<B> {
             }
         }
 
-        let id = id.ok_or_else(|| missing_attr("id"))?;
-        let id = fields
-            .iter()
-            .find(|field| field.field == id)
-            .ok_or_else(|| {
-                Error::new(
-                    Span::call_site(),
-                    "id does not refer to a field of the struct",
-                )
-            })?
-            .clone();
+        let id = id.unwrap_or_else(|| Ident::new("id", Span::call_site()));
+        let id = match fields.iter_mut().find(|field| field.field == id) {
+            Some(id) => id,
+            None => proc_macro_error::abort!(id, "id field does not exist in struct"),
+        };
+        id.default = match id.default {
+            None => Some(DefaultType::Always),
+            Some(_) => proc_macro_error::abort!(id.field, "the id field is always always-default and another default-behavior cannot be specified"),
+        };
+        let id = id.clone();
 
-        if insertable.is_none() && fields.iter().any(|field| field.default) {
-            return Err(Error::new(
+        for field in fields.iter() {
+            if field.set.is_some() && field.default == Some(DefaultType::Always) {
+                proc_macro_error::abort!(
+                    field.field,
+                    "an always-default field cannot have a setter"
+                );
+            }
+        }
+
+        let table = table.ok_or_else(|| missing_attr("table"))?;
+        let reserved_table_name = B::RESERVED_IDENTS.contains(&&*table.to_string().to_uppercase());
+        if reserved_table_name {
+            proc_macro_error::emit_warning!(
                 Span::call_site(),
-                "#[ormx(default)] has no effect without #[ormx(insertable = ..)]",
-            ));
+                "This table name is a reserved keyword, you might want to consider choosing a different name."
+            );
         }
 
         Ok(Table {
             ident: value.ident.clone(),
             vis: value.vis.clone(),
-            table: table.ok_or_else(|| missing_attr("table"))?,
+            table,
+            reserved_table_name,
             id,
             insertable,
             fields,
-            deletable: deletable.unwrap_or(false)
+            deletable: deletable.unwrap_or(false),
         })
     }
 }
