@@ -95,7 +95,7 @@ impl Parse for Insertable {
 pub fn parse_attrs<A: Parse>(attrs: &[Attribute]) -> Result<Vec<A>> {
     let attrs = attrs
         .iter()
-        .filter(|a| a.path.is_ident("ormx"))
+        .filter(|a| a.path().is_ident("ormx"))
         .map(|a| a.parse_args_with(Punctuated::<A, Token![,]>::parse_terminated))
         .collect::<Result<Vec<_>>>()?
         .into_iter()
