@@ -1,33 +1,33 @@
 [package]
-name = "ormx"
-version = "0.10.0"
-authors = ["Moritz Bischof", "Matt Fellenz"]
-edition = "2018"
-license = "MIT"
-description = "lightweight procedural macros bringing orm-like features to sqlx"
-homepage = "https://github.com/mattfbacon/ormx"
-repository = "https://github.com/mattfbacon/ormx"
+    authors     = ["Moritz Bischof", "Matt Fellenz", "Kura"]
+    description = "lightweight procedural macros bringing orm-like features to sqlx"
+    edition     = "2018"
+    homepage    = "https://github.com/mattfbacon/ormx"
+    license     = "MIT"
+    name        = "ormx"
+    repository  = "https://github.com/mattfbacon/ormx"
+    version     = "0.10.0"
 
-[package.metadata.docs.rs]
-features = ["_docs-rs-build"]
-targets = ["x86_64-unknown-linux-gnu"]
+    [package.metadata.docs.rs]
+        features = ["_docs-rs-build"]
+        targets  = ["x86_64-unknown-linux-gnu"]
 
 [features]
-mysql = ["sqlx/mysql", "ormx-macros/mysql"]
-sqlite = ["sqlx/sqlite", "ormx-macros/sqlite"]
-postgres = ["sqlx/postgres", "ormx-macros/postgres"]
+    mysql    = ["sqlx/mysql", "ormx-macros/mysql"]
+    postgres = ["sqlx/postgres", "ormx-macros/postgres"]
+    sqlite   = ["sqlx/sqlite", "ormx-macros/sqlite"]
 
-_docs-rs-build = ["sqlx/runtime-tokio-rustls", "postgres"]
+    _docs-rs-build = ["sqlx/runtime-tokio-rustls", "postgres"]
 
 [dependencies]
-ormx-macros = { path = "../ormx-macros", version = "0.10" }
-futures = "0.3"
+    futures     = "0.3"
+    ormx-macros = { path = "../ormx-macros", version = "0.10" }
 
-[dependencies.sqlx]
-version = "0.6"
-default-features = false
-features = ["macros"]
+    [dependencies.sqlx]
+        default-features = false
+        features         = ["macros"]
+        version          = "0.7"
 
 [dev-dependencies]
-tokio = { version = "1.1", features = ["full"] }
-anyhow = "1"
+    anyhow = "1"
+    tokio  = { version = "1.1", features = ["full"] }

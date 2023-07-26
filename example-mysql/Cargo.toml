@@ -1,19 +1,25 @@
 [package]
-name = "example-mysql"
-version = "0.1.0"
-authors = ["moritz", "Matt Fellenz"]
-edition = "2018"
+    authors = ["moritz", "Matt Fellenz", "Kura"]
+    edition = "2018"
+    name    = "example-mysql"
+    version = "0.1.0"
 
 [dependencies]
-ormx = { path = "../ormx", features = ["mysql"] }
-tokio = { version = "1.1", features = ["full"] }
-anyhow = "1"
-dotenv = "0.15"
-chrono = "0.4"
-simple_logger = "1"
-log = "0.4"
+    anyhow        = "1"
+    chrono        = "0.4"
+    dotenv        = "0.15"
+    log           = "0.4"
+    ormx          = { path = "../ormx", features = ["mysql"] }
+    simple_logger = "4"
+    tokio         = { version = "1.1", features = ["full"] }
 
-[dependencies.sqlx]
-version = "0.6"
-default-features = false
-features = ["macros", "mysql", "runtime-tokio-rustls", "chrono", "offline"]
+    [dependencies.sqlx]
+        default-features = false
+        features = [
+            "macros",
+            "mysql",
+            "runtime-tokio-rustls",
+            "chrono",
+            "offline",
+        ]
+        version = "^0.7"
