@@ -20,6 +20,5 @@
             "mysql",
             "runtime-tokio-rustls",
             "chrono",
-            "offline",
         ]
-        version = "^0.7"
+        version = "0.7"

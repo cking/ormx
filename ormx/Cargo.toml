@@ -6,7 +6,7 @@
     license     = "MIT"
     name        = "ormx"
     repository  = "https://github.com/mattfbacon/ormx"
-    version     = "0.10.0"
+    version     = "0.11.0"
 
     [package.metadata.docs.rs]
         features = ["_docs-rs-build"]
@@ -21,7 +21,7 @@
 
 [dependencies]
     futures     = "0.3"
-    ormx-macros = { path = "../ormx-macros", version = "0.10" }
+    ormx-macros = { path = "../ormx-macros", version = "0.11" }
 
     [dependencies.sqlx]
         default-features = false
